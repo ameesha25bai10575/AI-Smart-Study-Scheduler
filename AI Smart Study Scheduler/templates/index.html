@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Study Scheduler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>📚 AI Smart Study Scheduler</h1>
+
+<div class="box">
+    <form method="POST">
+
+        <div id="subjects">
+            <div class="row">
+                <input type="text" name="subject" placeholder="Subject" required>
+
+                <select name="priority">
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                </select>
+
+                <select name="difficulty">
+                    <option>Hard</option>
+                    <option>Medium</option>
+                    <option>Easy</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="button" onclick="addSubject()">+ Add Subject</button>
+
+        <br><br>
+
+        <input type="number" name="hours" placeholder="Total Hours" required>
+
+        <br><br>
+
+        <button type="submit">Generate Timetable</button>
+    </form>
+</div>
+
+{% if timetable %}
+<table>
+<tr>
+    <th>Time</th>
+    <th>Subject</th>
+    <th>Priority</th>
+    <th>Suggestion</th>
+    <th>Status</th>
+</tr>
+
+{% for item in timetable %}
+<tr>
+    <td>{{item.start}} - {{item.end}}</td>
+    <td>{{item.subject}}</td>
+    <td>{{item.priority}}</td>
+    <td>{{item.suggestion}}</td>
+    <td>
+        {% if item.subject != "Break" %}
+        <button type="button" class="complete"
+            onclick="updateStatus(this, '{{item.subject}}','completed')">✔</button>
+
+        <button type="button" class="skip"
+            onclick="updateStatus(this, '{{item.subject}}','skipped')">✖</button>
+        {% else %}
+        -
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+<script>
+function addSubject(){
+    let div = document.createElement("div");
+    div.classList.add("row");
+    div.innerHTML = `
+        <input type="text" name="subject" placeholder="Subject" required>
+        <select name="priority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+        </select>
+        <select name="difficulty">
+            <option>Hard</option>
+            <option>Medium</option>
+            <option>Easy</option>
+        </select>
+    `;
+    document.getElementById("subjects").appendChild(div);
+}
+
+function updateStatus(btn, subject, status){
+    fetch("/update", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "subject=" + encodeURIComponent(subject) + "&status=" + encodeURIComponent(status)
+    })
+    .then(response => response.text())
+    .then(data => {
+        let row = btn.closest("tr");
+
+        if(status === "completed"){
+            row.style.backgroundColor = "#d4edda";
+            row.style.color = "#155724";
+            row.cells[4].innerHTML = "✅ Done";
+        }
+        else{
+            row.style.backgroundColor = "#f8d7da";
+            row.style.color = "#721c24";
+            row.cells[4].innerHTML = "❌ Skipped";
+        }
+    });
+}
+</script>
+
+</body>
+</html>
